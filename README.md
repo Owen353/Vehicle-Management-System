@@ -1,6 +1,5 @@
 # Vehicle Management System — Web Frontend
 
-**COMP 353 — Databases**
 
 A web-based interface for a vehicle rental and dispatch database. It supports full CRUD (view, add, edit, delete) across every table in a MySQL database hosted on Concordia's ENCS servers.
 
