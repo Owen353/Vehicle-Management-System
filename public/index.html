@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-title">Vehicle DB</div>
+
+      <div class="nav-section">Operations</div>
+      <a href="#" class="nav-link active" data-table="Customer">Customers</a>
+      <a href="#" class="nav-link" data-table="Entreprise">Enterprises</a>
+      <a href="#" class="nav-link" data-table="Individual">Individuals</a>
+      <a href="#" class="nav-link" data-table="Reservation">Reservations</a>
+      <a href="#" class="nav-link" data-table="Mission">Missions</a>
+
+      <div class="nav-section">Fleet</div>
+      <a href="#" class="nav-link" data-table="Vehicle">Vehicles</a>
+      <a href="#" class="nav-link" data-table="Driver">Drivers</a>
+      <a href="#" class="nav-link" data-table="License">Licenses</a>
+      <a href="#" class="nav-link" data-table="Driver_License">Driver Licenses</a>
+      <a href="#" class="nav-link" data-table="Garage">Garages</a>
+
+      <div class="nav-section">Billing</div>
+      <a href="#" class="nav-link" data-table="Invoice">Invoices</a>
+      <a href="#" class="nav-link" data-table="Invoice_Line">Invoice Lines</a>
+      <a href="#" class="nav-link" data-table="Payment">Payments</a>
+      <a href="#" class="nav-link" data-table="Tax_Rate">Tax Rates</a>
+
+      <div class="nav-section">Tools</div>
+      <a href="#" class="nav-link" id="nav-sql-console">SQL Console</a>
+    </nav>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <h2 id="page-title">Customers</h2>
+        <div class="topbar-actions" id="table-topbar-actions">
+          <input type="text" id="search-input" placeholder="Search...">
+          <button id="btn-add" class="btn">+ Add</button>
+        </div>
+      </div>
+
+      <!-- Table view (existing) -->
+      <div class="content" id="table-view">
+        <div id="loading" class="loading" style="display:none;">Loading...</div>
+        <div id="table-wrapper">
+          <table id="data-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <p id="empty-state" style="display:none; text-align:center; padding:40px; color:#999;">No records found.</p>
+        <p id="record-count" class="record-count"></p>
+      </div>
+
+      <!-- SQL Console view -->
+      <div class="content" id="sql-view" style="display:none;">
+        <div class="sql-console">
+          <div class="sql-editor-area">
+            <label for="sql-input" class="sql-label">Write your SQL query:</label>
+            <textarea id="sql-input" class="sql-input" rows="6" placeholder="SELECT * FROM Customer LIMIT 10;" spellcheck="false"></textarea>
+            <div class="sql-toolbar">
+              <span id="sql-status" class="sql-status">Ctrl+Enter to run</span>
+              <button id="sql-run" class="btn">▶ Run Query</button>
+            </div>
+          </div>
+
+          <!-- Query Hints -->
+          <div class="sql-hints">
+            <div class="sql-hints-header" id="sql-hints-toggle">
+              <span>📋 Example Queries (click to expand)</span>
+              <span class="sql-hints-arrow" id="sql-hints-arrow">▶</span>
+            </div>
+            <div class="sql-hints-body" id="sql-hints-body" style="display:none;">
+
+              <div class="sql-hint-section">Available Tables</div>
+              <div class="sql-hint-tables">
+                Customer, Entreprise, Individual, Reservation, Mission, Vehicle, Driver, License, Driver_License, Garage, Tax_Rate, Invoice, Invoice_Line, Payment
+              </div>
+
+              <div class="sql-hint-section">Project Queries</div>
+
+              <div class="sql-hint-item" data-query="SELECT C.Id_Customer, E.Business_Name, C.Address_Customer, C.Phone_Customer
+FROM Customer C
+INNER JOIN Entreprise E ON C.Id_Customer = E.Id_Customer
+WHERE C.Type_Customer = 'E';">
+                <strong>(a)</strong> List of enterprise customers
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT * FROM Reservation WHERE Id_Reservation > 1;">
+                <strong>(b)</strong> Reservations with ID &gt; 1
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT DISTINCT D.Id_Driver, D.First_Name_Driver, D.Last_Name_Driver, V.Id_Vehicle, V.Plate_Vehicle, V.Brand_Vehicle
+FROM Mission M
+INNER JOIN Driver D ON M.Id_Driver = D.Id_Driver
+INNER JOIN Vehicle V ON M.Id_Vehicle = V.Id_Vehicle;">
+                <strong>(c)</strong> Drivers &amp; vehicles with at least one mission
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT M.*, D.First_Name_Driver, D.Last_Name_Driver, V.Plate_Vehicle, V.Brand_Vehicle
+FROM Mission M
+INNER JOIN Driver D ON M.Id_Driver = D.Id_Driver
+INNER JOIN Vehicle V ON M.Id_Vehicle = V.Id_Vehicle
+WHERE M.Planned_Start_Datetime BETWEEN '2026-03-11' AND '2026-03-18';">
+                <strong>(d)</strong> Missions between Mar 11–18, 2026
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT DISTINCT C.Id_Customer, C.Type_Customer, C.Address_Customer, C.Phone_Customer
+FROM Customer C
+INNER JOIN Invoice I ON C.Id_Customer = I.Id_Customer
+WHERE I.Status_Invoice != 'Paid';">
+                <strong>(e)</strong> Customers who haven't paid invoices
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT DISTINCT D.Id_Driver, D.First_Name_Driver, D.Last_Name_Driver
+FROM Driver D
+INNER JOIN Mission M ON D.Id_Driver = M.Id_Driver
+INNER JOIN Vehicle V ON M.Id_Vehicle = V.Id_Vehicle
+WHERE V.Brand_Vehicle = 'GMC';">
+                <strong>(f)</strong> Drivers who drove GMC vehicles
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT C.Id_Customer, C.Phone_Customer, SUM(IL.Line_Total) AS Total_Amount
+FROM Customer C
+INNER JOIN Invoice I ON C.Id_Customer = I.Id_Customer
+INNER JOIN Invoice_Line IL ON I.Id_Invoice = IL.Id_Invoice
+GROUP BY C.Id_Customer
+HAVING Total_Amount > 1000;">
+                <strong>(g)</strong> Customers with invoices &gt; $1000
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT C.Id_Customer, C.Phone_Customer, COUNT(I.Id_Invoice) AS Invoice_Count
+FROM Customer C
+LEFT JOIN Invoice I ON C.Id_Customer = I.Id_Customer
+GROUP BY C.Id_Customer;">
+                <strong>(h)</strong> Customers with their invoice count
+              </div>
+
+              <div class="sql-hint-item" data-query="SELECT D.First_Name_Driver, D.Last_Name_Driver, M.Id_Mission, (M.Odo_After - M.Odo_Before) AS Km_Traveled
+FROM Driver D
+INNER JOIN Mission M ON D.Id_Driver = M.Id_Driver
+WHERE M.Planned_Start_Datetime BETWEEN '2026-02-01' AND '2026-03-31'
+  AND (M.Odo_After - M.Odo_Before) > 7000;">
+                <strong>(i)</strong> Drivers with missions Feb–Mar 2026, &gt; 7000 km
+              </div>
+
+              <div class="sql-hint-item" data-query="UPDATE Mission
+SET Actual_End_Time = '2026-03-15 17:00:00', Status_Mission = 'Completed'
+WHERE Id_Mission = 1;">
+                <strong>(j)</strong> Update mission details (transaction)
+              </div>
+
+              <div class="sql-hint-item" data-query="UPDATE Mission
+SET Status_Mission = 'Cancelled'
+WHERE Id_Mission = 1;">
+                <strong>(k)</strong> Cancel a mission (transaction)
+              </div>
+
+            </div>
+          </div>
+
+          <div id="sql-error" class="sql-error" style="display:none;"></div>
+          <div id="sql-message" class="sql-message" style="display:none;"></div>
+          <div id="sql-results" style="display:none;">
+            <div class="sql-results-header">
+              <span id="sql-row-count"></span>
+            </div>
+            <div class="sql-table-wrapper">
+              <table id="sql-table">
+                <thead id="sql-thead"></thead>
+                <tbody id="sql-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Record</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <form id="modal-form">
+        <div id="modal-fields"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal-overlay" id="delete-overlay">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3>Confirm Delete</h3>
+        <button class="modal-close" id="delete-close">&times;</button>
+      </div>
+      <p style="padding:16px;">Are you sure you want to delete this record?</p>
+      <div class="modal-footer" style="padding:0 16px 16px;">
+        <button type="button" class="btn btn-cancel" id="delete-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
